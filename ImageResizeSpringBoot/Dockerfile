@@ -19,8 +19,11 @@ RUN python3 -m venv /opt/background-removal-env \
     && /opt/background-removal-env/bin/pip install --no-cache-dir -r requirements.txt \
     && /opt/background-removal-env/bin/python -c "from rembg import new_session; new_session('u2netp')"
 
-ENV PATH="/opt/background-removal-env/bin:${PATH}"
+ENV PATH="/opt/background-removal-env/bin:${PATH}" \
+    OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1
 COPY --from=build /build/target/ImageResizeSpringBoot-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms64m", "-Xmx160m", "-XX:MaxMetaspaceSize=128m", "-jar", "app.jar"]

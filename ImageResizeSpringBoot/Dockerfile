@@ -6,7 +6,8 @@ RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn package -DskipTests
 
-FROM eclipse-temurin:21-jre
+# Jammy supplies Python 3.10, which is supported by the pinned rembg release.
+FROM eclipse-temurin:21-jre-jammy
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 python3-venv \

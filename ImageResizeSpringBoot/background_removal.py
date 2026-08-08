@@ -10,14 +10,7 @@ def main() -> None:
     source = Image.open(io.BytesIO(sys.stdin.buffer.read())).convert("RGBA")
     # The portrait model is much smaller than the default model, so the first
     # preview is available promptly while still segmenting people accurately.
-    foreground = remove(
-        source,
-        session=new_session("u2netp"),
-        alpha_matting=True,
-        alpha_matting_foreground_threshold=240,
-        alpha_matting_background_threshold=10,
-        alpha_matting_erode_size=8,
-    )
+    foreground = remove(source, session=new_session("u2netp"))
     # A slight feather removes the hard, dark edge that can otherwise remain
     # when a photo taken against a dark or colourful background is composited
     # onto white.

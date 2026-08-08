@@ -1,28 +1,17 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { removeBackground } from '@imgly/background-removal';
 
 @Injectable({ providedIn: 'root' })
 export class BackgroundRemovalService {
-  private readonly endpoint = `${environment.apiBaseUrl}/api/payment/passport-photo/remove-background`;
-
-  constructor(private readonly http: HttpClient) {}
-
   async replaceBackgroundWithWhite(source: HTMLCanvasElement): Promise<string> {
     const image = await this.toJpegBlob(source);
-    const formData = new FormData();
-    formData.append('file', image, 'passport-photo.jpg');
+    const foreground = await removeBackground(image, {
+      model: 'isnet_quint8',
+      proxyToWorker: true,
+      output: { format: 'image/png' }
+    });
 
-    const processedImage = await firstValueFrom(
-      this.http.post(this.endpoint, formData, { responseType: 'blob' })
-    );
-
-    if (processedImage.size === 0 || processedImage.type !== 'image/jpeg') {
-      throw new Error('The background-removal service did not return an image.');
-    }
-
-    return this.toDataUrl(processedImage);
+    return this.compositeOnWhite(foreground, source.width, source.height);
   }
 
   private toJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -37,12 +26,28 @@ export class BackgroundRemovalService {
     });
   }
 
-  private toDataUrl(image: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('The processed image could not be read.'));
-      reader.readAsDataURL(image);
-    });
+  private async compositeOnWhite(image: Blob, width: number, height: number): Promise<string> {
+    const objectUrl = URL.createObjectURL(image);
+    const foreground = new Image();
+    foreground.src = objectUrl;
+
+    try {
+      await foreground.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error('Your browser could not create the white background.');
+      }
+
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, width, height);
+      context.drawImage(foreground, 0, 0, width, height);
+      return canvas.toDataURL('image/jpeg', 0.95);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   }
+
 }

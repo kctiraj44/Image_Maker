@@ -19,8 +19,10 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "@emailjs/browser": "^4.4.1",
+    "@imgly/background-removal": "^1.7.0",
     "cropperjs": "^1.6.2",
     "konva": "^9.3.20",
+    "onnxruntime-web": "^1.21.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

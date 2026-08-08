@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { EmailService } from '../services/email.service';
-import { AdminService, Order } from '../services/admin.service';
 
 @Component({
   selector: 'app-success',
@@ -20,8 +19,7 @@ export class SuccessComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private emailService: EmailService,
-    private adminService: AdminService
+    private emailService: EmailService
   ) {}
 
   ngOnInit(): void {
@@ -29,25 +27,6 @@ export class SuccessComponent implements OnInit {
     this.email = orderDetails.email || '';
     this.orderId = 'ORD-' + Date.now();
     this.total = orderDetails.total || 9.95;
-
-    // Save order to admin store
-    const order: Order = {
-      orderId: this.orderId,
-      customerName: orderDetails.cardholderName || '',
-      email: this.email,
-      package: 'Digital Photo (US 2×2)',
-      addons: [],
-      subtotal: this.total,
-      tax: +(this.total * 0.1).toFixed(2),
-      discount: 0,
-      total: this.total,
-      cardLast4: '',
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-      photoDownloaded: false,
-      emailSent: false
-    };
-    this.adminService.saveOrder(order);
 
     // Auto-download photo
     this.downloadPhoto();

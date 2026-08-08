@@ -38,7 +38,9 @@ export class AdminComponent implements OnInit {
   }
 
   loadStats(): void {
-    this.stats = this.adminService.getOrderStats();
+    const completed = this.orders.filter(order => order.status === 'completed');
+    const totalRevenue = completed.reduce((sum, order) => sum + order.total, 0);
+    this.stats = { totalOrders: this.orders.length, completedOrders: completed.length, totalRevenue, avgOrderValue: completed.length ? totalRevenue / completed.length : 0 };
   }
 
   viewOrderDetail(order: Order): void {
@@ -54,15 +56,13 @@ export class AdminComponent implements OnInit {
   deleteOrder(orderId: string, event: Event): void {
     event.stopPropagation();
     if (confirm('Are you sure you want to delete this order?')) {
-      this.adminService.deleteOrder(orderId);
-      this.loadOrders();
+      this.adminService.deleteOrder(orderId).subscribe(() => this.loadOrders());
     }
   }
 
   clearAllOrders(): void {
     if (confirm('⚠️ This will delete ALL orders. Are you sure?')) {
-      this.adminService.clearAllOrders();
-      this.loadOrders();
+      this.adminService.clearAllOrders().subscribe(() => this.loadOrders());
     }
   }
 

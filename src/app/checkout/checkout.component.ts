@@ -207,7 +207,7 @@ export class CheckoutComponent implements OnInit {
         photoDownloaded: false,
         emailSent: false
       };
-      this.adminService.saveOrder(order);
+      this.adminService.saveOrder(order).subscribe({ error: () => alert('Your order could not be saved. Please try again.') });
 
       // Send confirmation email
       const croppedImage = sessionStorage.getItem('croppedImage') || '';

@@ -1,7 +1,6 @@
 package org.example.imageresizespringboot.controller;
 
 import org.example.imageresizespringboot.service.ImageCropService;
-import org.example.imageresizespringboot.service.BackgroundRemovalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -23,29 +22,10 @@ import java.util.List;
 public class ImageResizerController {
 
     private final ImageCropService imageCropService;
-    private final BackgroundRemovalService backgroundRemovalService;
 
     @Autowired
-    public ImageResizerController(ImageCropService imageCropService, BackgroundRemovalService backgroundRemovalService) {
+    public ImageResizerController(ImageCropService imageCropService) {
         this.imageCropService = imageCropService;
-        this.backgroundRemovalService = backgroundRemovalService;
-    }
-
-    @CrossOrigin(origins = "${app.cors.allowed-origin}")
-    @PostMapping(value = "/passport-photo/remove-background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.IMAGE_JPEG_VALUE)
-    public ResponseEntity<byte[]> removeBackground(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (!List.of(MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE).contains(file.getContentType())) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (file.getSize() > 10L * 1024 * 1024) {
-            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).build();
-        }
-
-        byte[] processedImage = backgroundRemovalService.replaceBackgroundWithWhite(file.getBytes());
-        return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(processedImage);
     }
 
     @CrossOrigin(origins = "${app.cors.allowed-origin}")

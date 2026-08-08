@@ -1,0 +1,104 @@
+<div class="cropper-wrapper">
+  <div class="cropper-header">
+    <h1>Crop Your Passport Photo</h1>
+    <p class="cropper-subtitle">Position your face and adjust the crop area to match the blue guides</p>
+  </div>
+
+  <div class="cropper-main-content" [class.single-column]="!croppedImage">
+    <!-- Left: Crop Editor -->
+    <div class="cropper-section crop-editor-section">
+      <div class="crop-container">
+        <img
+          #imageElement
+          [src]="imageUrl"
+          (error)="onImageLoadError()"
+          alt="To Crop"
+          *ngIf="imageUrl"
+          style="max-width: 100%; display: block;"
+        />
+
+        <p *ngIf="!imageUrl" class="missing-image-message">
+          Please upload a photo first.
+        </p>
+      </div>
+
+      <!-- Control Panel -->
+      <div class="control-panel">
+        <div class="control-group">
+          <label class="control-label">Zoom</label>
+          <div class="button-group">
+            <button type="button" class="control-btn control-btn-secondary" (click)="zoomOut()" title="Zoom out">
+              <span class="btn-icon">−</span>
+            </button>
+            <button type="button" class="control-btn control-btn-secondary" (click)="zoomIn()" title="Zoom in">
+              <span class="btn-icon">+</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label">Rotate</label>
+          <div class="button-group">
+            <button type="button" class="control-btn control-btn-secondary" (click)="rotateLeft()" title="Rotate left">
+              ↺
+            </button>
+            <button type="button" class="control-btn control-btn-secondary" (click)="rotateRight()" title="Rotate right">
+              ↻
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="control-btn control-btn-reset" (click)="resetView()" title="Reset all changes">
+          Reset
+        </button>
+
+        <button type="button" class="control-btn control-btn-primary" (click)="cropImage()" [disabled]="isProcessingPreview">
+          {{ isProcessingPreview ? 'Preparing Preview…' : 'Preview with White Background' }}
+        </button>
+      </div>
+
+      <p *ngIf="previewError" class="preview-error" role="alert">{{ previewError }}</p>
+
+      <div class="instructions">
+        <p><strong>💡 Positioning Tips:</strong></p>
+        <ul>
+          <li>Use arrow keys for fine positioning</li>
+          <li>Zoom until your face fills the oval</li>
+          <li>Keep your face centred on the vertical line</li>
+        </ul>
+      </div>
+
+      <div class="face-checklist">
+        <h4>� How to Align Your Photo</h4>
+        <div class="checklist-item"><span class="dot yellow"></span><strong>Top of Head</strong> — touch the yellow line at top</div>
+        <div class="checklist-item"><span class="dot blue"></span><strong>Eyes</strong> — align with the two blue eye shapes</div>
+        <div class="checklist-item"><span class="dot green"></span><strong>Nose</strong> — tip should be on the green dot</div>
+        <div class="checklist-item"><span class="dot orange"></span><strong>Mouth</strong> — align closed mouth to the orange line</div>
+        <div class="checklist-item"><span class="dot red"></span><strong>Chin</strong> — bottom of chin on the red line</div>
+        <div class="checklist-item"><span class="dot white"></span><strong>Face oval</strong> — your head should fill the dashed oval</div>
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="cropper-section preview-section" *ngIf="croppedImage">
+      <div class="preview-container">
+        <h2 class="preview-title">Preview</h2>
+        <div class="preview-image-wrapper">
+          <img
+            [src]="croppedImage"
+            alt="Cropped Preview"
+            class="preview-image"
+          />
+        </div>
+        <div class="preview-info">
+          <p class="preview-size">600 × 600 pixels</p>
+          <p class="preview-format">JPEG Format</p>
+          <p class="preview-background">White background applied</p>
+        </div>
+        <button type="button" class="control-btn control-btn-download" (click)="downloadImage()">
+          💳 Continue to Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

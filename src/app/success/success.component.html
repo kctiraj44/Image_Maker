@@ -1,0 +1,46 @@
+<div class="success-wrapper">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <h1>Payment Successful!</h1>
+    <p class="success-sub">Your US passport photo has been processed and is ready.</p>
+
+    <div class="status-banners">
+      <div class="banner download">
+        <span class="banner-icon">📥</span>
+        <div>
+          <strong>Photo Downloaded</strong>
+          <p>Your passport photo has been saved to your Downloads folder</p>
+        </div>
+      </div>
+
+      <div class="banner email" [class.pending]="!emailSent">
+        <span class="banner-icon">{{ emailSent ? '📧' : '⏳' }}</span>
+        <div>
+          <strong>{{ emailSent ? 'Confirmation Email Sent' : 'Sending Email...' }}</strong>
+          <p *ngIf="emailSent">Sent to {{ email }}</p>
+          <p *ngIf="!emailSent">Sending confirmation to {{ email }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-info">
+      <div class="info-row"><span>Order ID</span><span>{{ orderId }}</span></div>
+      <div class="info-row"><span>Amount Paid</span><span>${{ total.toFixed(2) }}</span></div>
+      <div class="info-row"><span>Photo Size</span><span>2×2 inch · 600×600 px · JPEG</span></div>
+    </div>
+
+    <div class="action-buttons">
+      <button (click)="downloadPhoto()" class="btn btn-primary">
+        ⬇ Download Again
+      </button>
+      <button (click)="createAnother()" class="btn btn-secondary">
+        📷 Create Another Photo
+      </button>
+    </div>
+
+    <p class="compliance-note">
+      🇺🇸 Your photo meets <strong>US State Department requirements</strong>.<br />
+      Please verify compliance with your specific application before submitting.
+    </p>
+  </div>
+</div>

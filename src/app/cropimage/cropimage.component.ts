@@ -11,6 +11,68 @@ import {
 import Cropper from 'cropperjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackgroundRemovalService } from '../services/background-removal.service';
+import { FaceLandmarkAnalysis, FaceLandmarkService } from '../services/face-landmark.service';
+
+interface DetectedFace {
+  boundingBox: FaceBounds;
+}
+
+interface FaceDetectorInstance {
+  detect(image: HTMLImageElement): Promise<DetectedFace[]>;
+}
+
+interface FaceDetectorConstructor {
+  new (options?: { fastMode?: boolean; maxDetectedFaces?: number }): FaceDetectorInstance;
+}
+
+export interface FaceBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export function calculateAutomaticCrop(face: FaceBounds, imageWidth: number, imageHeight: number): Cropper.SetDataOptions {
+  const targetHeadHeightRatio = 0.60;
+  // The guide uses a 60% head height with the eyes 62% up from the bottom.
+  // This keeps both measurements inside the Department of State ranges.
+  const targetTopHeadSpaceRatio = 0.14;
+  const cropSize = Math.min(
+    Math.max(face.height / targetHeadHeightRatio, face.width * 1.55),
+    imageWidth,
+    imageHeight
+  );
+  const x = Math.min(Math.max(face.x + (face.width / 2) - (cropSize / 2), 0), imageWidth - cropSize);
+  const y = Math.min(Math.max(face.y - (cropSize * targetTopHeadSpaceRatio), 0), imageHeight - cropSize);
+  return { x, y, width: cropSize, height: cropSize };
+}
+
+export function calculateLandmarkCrop(
+  analysis: FaceLandmarkAnalysis,
+  imageWidth: number,
+  imageHeight: number
+): Cropper.SetDataOptions | null {
+  if (!analysis.forehead || !analysis.chin || !analysis.eyeCenter || !analysis.faceCenter) {
+    return null;
+  }
+
+  const foreheadY = analysis.forehead.y * imageHeight;
+  const chinY = analysis.chin.y * imageHeight;
+  const eyeY = analysis.eyeCenter.y * imageHeight;
+  const estimatedHairTopY = foreheadY - ((chinY - foreheadY) * 0.12);
+  const cropSize = Math.min(
+    Math.max((chinY - estimatedHairTopY) / 0.60, imageWidth * 0.45),
+    imageWidth,
+    imageHeight
+  );
+  const x = Math.min(
+    Math.max((analysis.faceCenter.x * imageWidth) - (cropSize / 2), 0),
+    imageWidth - cropSize
+  );
+  // The eye line is positioned 59% up from the bottom, as shown by the template.
+  const y = Math.min(Math.max(eyeY - (cropSize * 0.41), 0), imageHeight - cropSize);
+  return { x, y, width: cropSize, height: cropSize };
+}
 
 @Component({
   selector: 'app-cropimage',
@@ -21,16 +83,21 @@ import { BackgroundRemovalService } from '../services/background-removal.service
   encapsulation: ViewEncapsulation.None
 })
 export class CropimageComponent implements AfterViewInit, OnDestroy {
-  private readonly outputSize = 600;
+  private readonly outputSize = 1200;
+  private readonly cropBoxDisplaySize = 600;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private backgroundRemovalService: BackgroundRemovalService
+    private backgroundRemovalService: BackgroundRemovalService,
+    private faceLandmarkService: FaceLandmarkService
   ) {}
 
   imageUrl: string | null = null;
   croppedImage: string | null = null;
+  finalImageSizeBytes: number | null = null;
+  backgroundChoice: 'keep' | 'remove' = 'remove';
+  autoCropStatus: 'detecting' | 'applied' | 'unavailable' = 'detecting';
   isProcessingPreview = false;
   previewError: string | null = null;
 
@@ -42,6 +109,7 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.imageUrl = sessionStorage.getItem('selectedImageUrl');
+    this.backgroundChoice = sessionStorage.getItem('backgroundChoice') === 'keep' ? 'keep' : 'remove';
 
     this.route.queryParams.subscribe(params => {
       if (params['download'] === 'success') {
@@ -61,9 +129,9 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     this.cropper = new Cropper(this.imageElement.nativeElement, {
       aspectRatio: 1,
       viewMode: 1,
-      autoCropArea: 0.9,
-      cropBoxResizable: true,
-      cropBoxMovable: true,
+      autoCropArea: 0.72,
+      cropBoxResizable: false,
+      cropBoxMovable: false,
       dragMode: 'move',
       guides: false,
       zoomable: true,
@@ -74,10 +142,11 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
 
       ready: ()=> {
           this.cropper?.setCropBoxData({
-            width: this.outputSize,
-            height: this.outputSize
+            width: this.cropBoxDisplaySize,
+            height: this.cropBoxDisplaySize
           });
           requestAnimationFrame(() => this.attachPassportGuides());
+          void this.createAutomaticPreview();
       },
       crop: () => {
         // Throttle validation to avoid performance impact
@@ -102,12 +171,61 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     this.previewError = null;
 
     try {
-      this.croppedImage = await this.backgroundRemovalService.replaceBackgroundWithWhite(canvas);
-    } catch {
-      this.previewError = 'We could not prepare the white background. Please try again.';
+      this.croppedImage = await this.backgroundRemovalService.createPassportJpeg(canvas);
+      this.finalImageSizeBytes = this.getDataUrlSize(this.croppedImage);
+    } catch (error) {
+      this.previewError = error instanceof Error
+        ? error.message
+        : 'We could not prepare the white background. Please try again.';
     } finally {
       this.isProcessingPreview = false;
     }
+  }
+
+  private async createAutomaticPreview(): Promise<void> {
+    if (!this.cropper || !this.imageElement?.nativeElement) {
+      this.autoCropStatus = 'unavailable';
+      return;
+    }
+
+    try {
+      const analysis = await this.faceLandmarkService.analyze(this.imageElement.nativeElement);
+      const crop = calculateLandmarkCrop(
+        analysis,
+        this.imageElement.nativeElement.naturalWidth,
+        this.imageElement.nativeElement.naturalHeight
+      );
+      if (analysis.faceCount !== 1 || !crop) {
+        this.autoCropStatus = 'unavailable';
+        this.applyFallbackFraming();
+        return;
+      }
+
+      this.cropper.setData(crop);
+      this.autoCropStatus = 'applied';
+      await this.cropImage();
+    } catch {
+      this.autoCropStatus = 'unavailable';
+      this.applyFallbackFraming();
+    }
+  }
+
+  private applyFallbackFraming(): void {
+    if (!this.cropper || !this.imageElement?.nativeElement) {
+      return;
+    }
+
+    const { naturalWidth, naturalHeight } = this.imageElement.nativeElement;
+    const cropSize = Math.min(naturalWidth, naturalHeight) * 0.72;
+    this.cropper.setData({
+      x: (naturalWidth - cropSize) / 2,
+      // Bias the source crop lower so the face moves upward in the final frame.
+      // This brings normally centered uploads nearer the 62%-from-bottom eye guide.
+      y: (naturalHeight - cropSize) * 0.72,
+      width: cropSize,
+      height: cropSize
+    });
+    void this.cropImage();
   }
 
   validateFacePosition(): void {
@@ -157,47 +275,25 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     const svg = cropBox.querySelector('.face-mold-svg');
     if (!svg) return;
 
-    const color = valid ? 'rgba(76,175,80,0.95)' : 'rgba(244,67,54,0.9)';
-    const glow  = valid ? 'rgba(76,175,80,0.3)' : 'rgba(244,67,54,0.25)';
-
-    // Update oval
+    // Keep the fixed mold subtle; it is a visual reference, not a pass/fail result.
     const oval = svg.querySelector('ellipse') as SVGElement | null;
     if (oval) {
-      oval.setAttribute('stroke', color);
-      oval.setAttribute('stroke-width', '2');
-      oval.setAttribute('filter', valid ? '' : '');
-    }
-
-    // Update all guide lines
-    svg.querySelectorAll('line').forEach((l: SVGElement) => {
-      if (!l.getAttribute('stroke')?.includes('255,193,7')) {
-        l.setAttribute('stroke', color.replace('0.9', '0.6').replace('0.95', '0.6'));
-      }
-    });
-
-    // Update eye ovals
-    svg.querySelectorAll('circle').forEach((c: SVGElement) => c.setAttribute('fill', color));
-
-    // Update hint
-    const hint = cropBox.querySelector('.mold-hint') as HTMLElement | null;
-    if (hint) {
-      hint.textContent = valid ? '✅ Face aligned correctly!' : '❌ Adjust to match the template';
-      hint.style.background = valid ? 'rgba(27,94,32,0.88)' : 'rgba(183,28,28,0.88)';
-      hint.style.boxShadow = `0 0 12px ${glow}`;
+      oval.setAttribute('stroke', 'rgba(76,175,80,0.38)');
+      oval.setAttribute('stroke-width', '0.9');
     }
 
     // Flash the oval border
     if (oval) {
-      oval.setAttribute('stroke-dasharray', valid ? '4,0' : '3,2');
+      oval.setAttribute('stroke-dasharray', '3,2');
     }
   }
 
   zoomIn(): void {
-    this.cropper?.zoom(0.1);
+    this.cropper?.zoom(0.05);
   }
 
   zoomOut(): void {
-    this.cropper?.zoom(-0.1);
+    this.cropper?.zoom(-0.05);
   }
 
   rotateLeft(): void {
@@ -210,6 +306,22 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
 
   resetView(): void {
     this.cropper?.reset();
+  }
+
+  returnToEditing(): void {
+    this.croppedImage = null;
+    this.finalImageSizeBytes = null;
+  }
+
+  getFinalImageSizeText(): string {
+    if (this.finalImageSizeBytes === null) {
+      return 'Preparing size…';
+    }
+    return `${Math.ceil(this.finalImageSizeBytes / 1024)} KB`;
+  }
+
+  isWithinPassportFileSizeLimit(): boolean {
+    return this.finalImageSizeBytes !== null && this.finalImageSizeBytes <= 240 * 1024;
   }
 
   downloadImage() {
@@ -252,7 +364,9 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.validationThrottle) clearTimeout(this.validationThrottle);
-    this.cropper?.destroy();
+    if (this.cropper && typeof this.cropper.destroy === 'function') {
+      this.cropper.destroy();
+    }
   }
 
   private attachPassportGuides(): void {
@@ -266,40 +380,23 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
 
     const overlay = document.createElement('div');
     overlay.className = 'overlay-guides';
-    // SVG face mold: align face to template for correct US passport proportions
+    // Clean measurement template: a square output boundary and head-height guide.
     overlay.innerHTML = `
       <svg class="face-mold-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <!-- Shoulder guideline -->
-        <line x1="10" y1="88" x2="90" y2="88" stroke="rgba(255,255,255,0.35)" stroke-width="0.5" stroke-dasharray="2,2"/>
-        <!-- Head oval -->
-        <ellipse cx="50" cy="44" rx="22" ry="30"
-          fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.2" stroke-dasharray="3,2"/>
-        <!-- Crown marker -->
-        <line x1="40" y1="14" x2="60" y2="14" stroke="rgba(255,193,7,0.9)" stroke-width="1"/>
-        <!-- Eye level line -->
-        <line x1="30" y1="38" x2="70" y2="38" stroke="rgba(33,150,243,0.7)" stroke-width="0.6" stroke-dasharray="2,2"/>
-        <!-- Left eye -->
-        <ellipse cx="42" cy="38" rx="4" ry="2.5" fill="none" stroke="rgba(33,150,243,0.9)" stroke-width="0.9"/>
-        <!-- Right eye -->
-        <ellipse cx="58" cy="38" rx="4" ry="2.5" fill="none" stroke="rgba(33,150,243,0.9)" stroke-width="0.9"/>
-        <!-- Nose tip -->
-        <circle cx="50" cy="52" r="1.2" fill="rgba(76,175,80,0.9)"/>
-        <!-- Mouth -->
-        <line x1="44" y1="60" x2="56" y2="60" stroke="rgba(255,152,0,0.85)" stroke-width="0.9"/>
-        <!-- Chin marker -->
-        <line x1="42" y1="73" x2="58" y2="73" stroke="rgba(244,67,54,0.8)" stroke-width="1"/>
-        <!-- Center axis -->
-        <line x1="50" y1="5" x2="50" y2="95" stroke="rgba(255,255,255,0.18)" stroke-width="0.4" stroke-dasharray="2,3"/>
-        <!-- Labels -->
-        <text x="62" y="15" fill="rgba(255,214,80,1)" font-size="4.2" font-family="sans-serif" font-weight="bold">Top of Head</text>
-        <text x="62" y="39" fill="rgba(100,181,246,1)" font-size="4.2" font-family="sans-serif" font-weight="bold">Eyes</text>
-        <text x="52" y="53" fill="rgba(129,199,132,1)" font-size="4.2" font-family="sans-serif" font-weight="bold">Nose</text>
-        <text x="57" y="61" fill="rgba(255,183,77,1)" font-size="4.2" font-family="sans-serif" font-weight="bold">Mouth</text>
-        <text x="60" y="74" fill="rgba(239,154,154,1)" font-size="4.2" font-family="sans-serif" font-weight="bold">Chin</text>
+        <!-- The only composition markers: top of head and bottom of chin. -->
+        <line x1="8" y1="14" x2="92" y2="14" stroke="rgba(63,194,140,0.82)" stroke-width="0.8" stroke-dasharray="2.3,1.8"/>
+        <text x="50" y="11" text-anchor="middle" fill="rgba(25,137,91,0.98)" font-size="3.1" font-weight="700">TOP OF HEAD</text>
+        <line x1="8" y1="74" x2="92" y2="74" stroke="rgba(63,194,140,0.82)" stroke-width="0.8" stroke-dasharray="2.3,1.8"/>
+        <text x="50" y="79" text-anchor="middle" fill="rgba(25,137,91,0.98)" font-size="3.1" font-weight="700">BOTTOM OF CHIN</text>
       </svg>
-      <div class="mold-hint">👆 Move &amp; zoom your photo to match the template</div>
     `;
 
     cropBox.appendChild(overlay);
+  }
+
+  private getDataUrlSize(dataUrl: string): number {
+    const base64 = dataUrl.split(',')[1] ?? '';
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    return Math.floor((base64.length * 3) / 4) - padding;
   }
 }

@@ -1,116 +1,152 @@
-<!-- Hero Section -->
-<section class="hero">
-  <div class="hero-content">
-    <div class="hero-badge">🇺🇸 Official US State Department Standards</div>
-    <h1>
-      Create US Passport Photos<br />
-      <span class="hero-highlight">Online Instantly</span>
-    </h1>
-    <p class="hero-sub">Compliant with official US passport & visa photo requirements.<br />2×2 inch · 600×600 px · No signup needed.</p>
-    <div class="hero-perks">
-      <span class="perk">⚡ Fast & Accurate</span>
-      <span class="perk">🔒 100% Private</span>
-      <span class="perk">✅ Free Preview</span>
-    </div>
-    <button class="cta-button" [routerLink]="['/image-upload']">
-      📷 Get Started — Upload Your Photo
-    </button>
-    <p class="hero-note">No account required · JPEG or PNG · Max 10MB</p>
-  </div>
-  <div class="hero-image">
-    <div class="photo-frame">
-      <img src="assets/passport_photo.png" alt="Passport photo example" />
-    </div>
-    <div class="photo-label">✅ Accepted passport photo</div>
-  </div>
-</section>
+<main class="landing-page">
+  <header class="site-header">
+    <a class="brand" routerLink="/" aria-label="Passport Photo Maker home">
+      <span class="brand-mark">P</span>
+      <span>Passport<span>Photo</span></span>
+    </a>
+    <nav class="primary-nav" aria-label="Main navigation">
+      <a routerLink="/">Home</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#why-choose-us">Why choose us</a>
+      <a href="#requirements">Photo requirements</a>
+      <a href="#about">About me</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="header-cta" routerLink="/image-upload">Start free</a>
+  </header>
 
-<!-- How It Works -->
-<section class="how-section">
-  <h2>How It Works</h2>
-  <p class="section-sub">Three simple steps to your perfect passport photo</p>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-icon"><img src="assets/upload.png" alt="Upload" /></div>
-      <h3>Upload Photo</h3>
-      <p>Choose a JPEG or PNG from your device</p>
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-copy">
+      <p class="eyebrow"><span>✦</span> Passport photos made simple · 100% free</p>
+      <h1 id="hero-heading">Your passport photo,<br /><em>ready in minutes.</em></h1>
+      <p class="hero-description">Upload a photo, position your face using clear guides, and create a polished US passport photo with a white background—completely free to create and download.</p>
+      <div class="hero-actions">
+        <a class="primary-button" routerLink="/image-upload">Create my photo <span>→</span></a>
+        <a class="text-link" href="#how-it-works">See how it works <span>↓</span></a>
+      </div>
+      <div class="trust-row" aria-label="Service highlights">
+        <div><strong>FREE</strong><span>no payment required</span></div>
+        <div><strong>600×600</strong><span>pixel output</span></div>
+        <div><strong>JPEG</strong><span>download ready</span></div>
+      </div>
     </div>
-    <div class="step-arrow">→</div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-icon"><img src="assets/crop.png" alt="Crop" /></div>
-      <h3>Crop & Adjust</h3>
-      <p>Position your face to match passport guidelines</p>
-    </div>
-    <div class="step-arrow">→</div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-icon"><img src="assets/download.png" alt="Download" /></div>
-      <h3>Download</h3>
-      <p>Get your photo as JPEG instantly</p>
-    </div>
-  </div>
-</section>
 
-<!-- Supported Sizes -->
-<section class="sizes-section">
-  <h2>Supported Photo Format</h2>
-  <p class="section-sub">We produce official US passport & visa photos to exact government specifications</p>
-  <div class="sizes-grid sizes-single">
-    <div class="size-card size-card-featured">
-      <div class="flag">🇺🇸</div>
-      <h3>USA</h3>
-      <p class="size-val">2 × 2 inches (51 × 51 mm)</p>
-      <p class="size-mm">Head height: 50%–69% of image · JPEG · 600×600 px</p>
-      <p class="size-badge">✅ US State Department Compliant</p>
+    <div class="hero-visual" aria-label="Passport photo preview example">
+      <div class="visual-glow"></div>
+      <div class="photo-card">
+        <div class="photo-card-top"><span>PHOTO PREVIEW</span><span class="ready-dot">● Ready</span></div>
+        <div class="portrait-wrap">
+          <img src="assets/passport_photo.png" alt="Example passport photo" />
+          <span class="corner top-left"></span><span class="corner top-right"></span>
+          <span class="corner bottom-left"></span><span class="corner bottom-right"></span>
+        </div>
+        <div class="photo-status"><span class="status-check">✓</span><span><strong>White background applied</strong><small>Preview generated successfully</small></span></div>
+      </div>
+      <div class="floating-pill pill-left"><span>✓</span> Face alignment</div>
+      <div class="floating-pill pill-right"><span>✦</span> Photo quality</div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Why Use This -->
-<section class="why-section">
-  <h2>Why Use This Tool?</h2>
-  <p class="section-sub">Built to save you time and money</p>
-  <div class="why-grid">
-    <div class="why-card">
-      <div class="why-icon">📏</div>
-      <h3>Accurate Sizing</h3>
-      <p>Exact dimensions per official government standards for every country</p>
-    </div>
-    <div class="why-card">
-      <div class="why-icon">🚫</div>
-      <h3>No Watermarks</h3>
-      <p>Get a clean, print-ready photo — no hidden branding or fees</p>
-    </div>
-    <div class="why-card">
-      <div class="why-icon">📱</div>
-      <h3>Works Everywhere</h3>
-      <p>Fully responsive — works on your phone, tablet, or desktop</p>
-    </div>
-    <div class="why-card">
-      <div class="why-icon">🔒</div>
-      <h3>100% Private</h3>
-      <p>Your photo is never stored on our servers. Complete privacy guaranteed</p>
-    </div>
-    <div class="why-card">
-      <div class="why-icon">⚡</div>
-      <h3>Instant Results</h3>
-      <p>Download your passport photo in under 2 minutes</p>
-    </div>
-    <div class="why-card">
-      <div class="why-icon">✅</div>
-      <h3>Expert Verified</h3>
-      <p>Photos checked against official US State Department requirements</p>
-    </div>
-  </div>
-</section>
+  <section class="confidence-strip">
+    <p><span>✓</span> 100% free to create &amp; download</p>
+    <p><span>✓</span> Background preview before download</p>
+    <p><span>✓</span> No personal information required</p>
+  </section>
 
-<!-- Final CTA -->
-<section class="cta-section">
-  <h2>Ready to Create Your Passport Photo?</h2>
-  <p>It takes less than 2 minutes. No account needed.</p>
-  <button class="cta-button cta-large" [routerLink]="['/image-upload']">
-    📷 Upload Your Photo Now
-  </button>
-</section>
+  <section class="trust-section" id="why-choose-us" aria-labelledby="trust-heading">
+    <div class="trust-intro">
+      <p class="eyebrow">Designed for peace of mind</p>
+      <h2 id="trust-heading">Clear tools. Clear expectations.</h2>
+      <p>You stay in control from upload to preview. We show you the result before checkout so you can decide whether it is right for you.</p>
+    </div>
+    <div class="trust-grid">
+      <article>
+        <span class="trust-icon">⌁</span>
+        <h3>Preview before download</h3>
+        <p>See your cropped photo and white-background preview before downloading it for free.</p>
+      </article>
+      <article>
+        <span class="trust-icon">◈</span>
+        <h3>Privacy-first workflow</h3>
+        <p>We do not ask for personal information. Your photo is processed in your browser and is never uploaded to or stored in our database.</p>
+      </article>
+      <article>
+        <span class="trust-icon">✓</span>
+        <h3>Guided, not guesswork</h3>
+        <p>Face-positioning and crop guides help you prepare your photo with confidence.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="privacy-promise" aria-label="Privacy promise">
+    <span class="privacy-promise-icon">▣</span>
+    <p><strong>Your privacy matters.</strong> No account or personal information is required to create and download your photo. Images are processed locally in your browser and are never uploaded to or stored in our database.</p>
+  </section>
+
+  <section class="steps-section" id="how-it-works">
+    <div class="section-heading">
+      <p class="eyebrow">Three easy steps</p>
+      <h2>A better photo starts here.</h2>
+      <p>Create a clean photo in a guided, straightforward workflow.</p>
+    </div>
+    <div class="steps-grid">
+      <article class="step-card">
+        <span class="step-number">01</span><span class="step-icon">↥</span>
+        <h3>Upload your photo</h3>
+        <p>Choose a recent JPEG or PNG directly from your phone or computer.</p>
+      </article>
+      <article class="step-card featured-step">
+        <span class="step-number">02</span><span class="step-icon">⌗</span>
+        <h3>Position and preview</h3>
+        <p>Use the face guide, crop controls, and white-background preview to refine it.</p>
+      </article>
+      <article class="step-card">
+        <span class="step-number">03</span><span class="step-icon">↓</span>
+        <h3>Download your photo</h3>
+        <p>Download your 600 × 600 JPEG for free after reviewing it.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="requirements-section" id="requirements">
+    <div class="requirements-copy">
+      <p class="eyebrow">Built for US passport photos</p>
+      <h2>Know what you are creating.</h2>
+      <p>Our editor helps you work toward the standard US passport-photo format, including the photo size, face-positioning guide, and plain white background preview.</p>
+      <a class="secondary-button" routerLink="/image-upload">Upload a photo <span>→</span></a>
+      <p class="requirements-note">Always review the latest official requirements before submitting your application.</p>
+    </div>
+    <div class="requirement-list">
+      <div><span class="requirement-icon">□</span><p><strong>2 × 2 inches</strong><small>Standard US passport-photo dimensions</small></p></div>
+      <div><span class="requirement-icon">◎</span><p><strong>Face-positioning guide</strong><small>Visual reference while cropping</small></p></div>
+      <div><span class="requirement-icon">◐</span><p><strong>White background preview</strong><small>Check the result before free download</small></p></div>
+    </div>
+  </section>
+
+  <section class="about-contact-section" id="about" aria-labelledby="about-heading">
+    <article class="about-card">
+      <p class="eyebrow">About this project</p>
+      <h2 id="about-heading">Made to make passport-photo preparation simpler.</h2>
+      <p>PassportPhoto is an independent tool created to give people a clearer way to crop, position, and download a passport-photo JPEG. It is not affiliated with the U.S. government, and final photo acceptance is always decided by the reviewing authority.</p>
+    </article>
+
+    <article class="contact-card" id="contact" aria-labelledby="contact-heading">
+      <span class="contact-icon">✉</span>
+      <p class="eyebrow">Contact</p>
+      <h2 id="contact-heading">Questions or feedback?</h2>
+      <p>For help with this tool or to share feedback, email:</p>
+      <a class="contact-email" href="mailto:kcteelak&#64;gmail.com">kcteelak&#64;gmail.com</a>
+    </article>
+  </section>
+
+  <section class="final-cta">
+    <div>
+      <p class="eyebrow">Start when you are ready</p>
+      <h2>Create your passport photo today.</h2>
+      <p>It only takes a few guided steps to get to your preview.</p>
+    </div>
+    <a class="light-button" routerLink="/image-upload">Upload your photo <span>→</span></a>
+  </section>
+
+  <footer><span>© 2026 PassportPhoto</span><span>Independent US passport-photo editor · Not affiliated with the U.S. government</span></footer>
+</main>

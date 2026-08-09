@@ -29,7 +29,7 @@ describe('EmailService', () => {
       cardholderName: 'John Doe',
       photoData: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABA...',
       orderId: 'ORD-123456',
-      total: 9.95
+      total: 1.99
     };
 
     service.sendPhotoAfterPayment(mockPayload).subscribe({
@@ -47,7 +47,7 @@ describe('EmailService', () => {
       cardholderName: 'John Doe',
       photoData: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABA...',
       orderId: 'ORD-123456',
-      total: 9.95
+      total: 1.99
     };
 
     service.sendPhotoAfterPayment(mockPayload).subscribe({
@@ -65,7 +65,7 @@ describe('EmailService', () => {
       cardholderName: 'Jane Smith',
       photoData: 'base64_photo_data',
       orderId: 'ORD-789012',
-      total: 6.95
+      total: 1.99
     };
 
     service.sendPhotoAfterPayment(mockPayload).subscribe({

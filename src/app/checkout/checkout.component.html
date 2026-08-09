@@ -1,250 +1,44 @@
 <div class="checkout-wrapper">
-  <!-- Review Step -->
-  <div *ngIf="paymentStep === 'review'" class="checkout-header">
-    <h1>Review Your Passport Photo</h1>
-    <p class="checkout-subtitle">Step 3 of 4 – Choose your package and proceed to payment</p>
+  <div class="checkout-header">
+    <p class="checkout-kicker">YOUR PHOTO IS READY</p>
+    <h1>Download your passport photo for free</h1>
+    <p class="checkout-subtitle">There is no payment required. Review your photo, then download the final 600 × 600 JPEG.</p>
   </div>
 
-  <!-- Payment Step -->
-  <div *ngIf="paymentStep === 'payment'" class="checkout-header">
-    <h1>Payment Details</h1>
-    <p class="checkout-subtitle">Step 4 of 4 – Secure payment with test card</p>
-  </div>
-
-  <!-- Success Step -->
-  <div *ngIf="paymentStep === 'success'" class="checkout-header">
-    <h1>✅ Payment Successful!</h1>
-    <p class="checkout-subtitle">Your order has been confirmed</p>
-  </div>
-
-  <!-- Review Content -->
-  <div *ngIf="paymentStep === 'review'" class="checkout-container">
-    <!-- Left: Photo Preview & Validation -->
-    <div class="checkout-section photo-section">
+  <div class="checkout-container">
+    <section class="checkout-section photo-section">
       <div class="validation-box">
-        <h2 class="validation-title">✅ Initial Check Passed</h2>
-        <p class="validation-desc">Your photo meets all basic requirements. After payment, our expert will verify it's 100% compliant.</p>
-
-        <div class="validation-items">
-          <div class="validation-item">
-            <span class="check-icon">✓</span>
-            <span class="check-text">Face is recognized</span>
-          </div>
-          <div class="validation-item">
-            <span class="check-icon">✓</span>
-            <span class="check-text">Only one face is allowed</span>
-          </div>
-          <div class="validation-item">
-            <span class="check-icon">✓</span>
-            <span class="check-text">Minimum dimension</span>
-          </div>
-          <div class="validation-item">
-            <span class="check-icon">✓</span>
-            <span class="check-text">Correct photo proportions</span>
-          </div>
-        </div>
+        <h2 class="validation-title">✓ Ready for your review</h2>
+        <p class="validation-desc">This tool created a 600 × 600 JPEG. Please review the current official requirements before submitting an application; the reviewing authority makes the final decision.</p>
       </div>
-
       <div class="photo-preview">
-        <img *ngIf="photoUrl" [src]="photoUrl" alt="Your passport photo" class="preview-img" />
-        <div class="photo-dimensions">600 × 600 pixels • JPEG</div>
+        <img *ngIf="photoUrl" [src]="photoUrl" alt="Your generated passport photo" class="preview-img" />
+        <div class="photo-dimensions">600 × 600 pixels · JPEG · Free download</div>
       </div>
-    </div>
+    </section>
 
-    <!-- Right: Packages & Checkout -->
-    <div class="checkout-section checkout-section-right">
-      <!-- Promo Code -->
-      <div class="promo-box">
-        <label class="promo-label">Have a promo code?</label>
-        <div class="promo-input-group">
-          <input
-            type="text"
-            [(ngModel)]="promoCode"
-            placeholder="Enter promo code"
-            class="promo-input"
-          />
-          <button type="button" (click)="applyPromo()" class="promo-btn">Apply</button>
-        </div>
-        <p *ngIf="promoApplied" class="promo-success">✓ Promo code applied!</p>
+    <section class="checkout-section checkout-section-right">
+      <div class="price-summary free-summary">
+        <div class="summary-row"><span>Digital passport photo</span><span>$0.00</span></div>
+        <div class="summary-row total"><span>Total today</span><span>Free</span></div>
       </div>
 
-      <!-- Price Summary -->
-      <div class="price-summary">
-        <div class="summary-row">
-          <span>Subtotal</span>
-          <span>${{ getSubtotal().toFixed(2) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>Tax</span>
-          <span>${{ getTax().toFixed(2) }}</span>
-        </div>
-        <div *ngIf="getDiscount() > 0" class="summary-row discount">
-          <span>Promo Discount</span>
-          <span>-${{ getDiscount().toFixed(2) }}</span>
-        </div>
-        <div class="summary-row total">
-          <span>Total</span>
-          <span>${{ getTotal().toFixed(2) }}</span>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button type="button" (click)="goToPayment()" class="btn btn-primary btn-lg">
-          💳 Proceed to Payment
+      <div class="action-buttons" *ngIf="!downloadComplete">
+        <button type="button" (click)="downloadForFree()" class="btn btn-primary btn-lg" [disabled]="isPreparingDownload">
+          {{ isPreparingDownload ? 'Preparing your download…' : '⬇ Download photo for free' }}
         </button>
-        <button type="button" (click)="retakePhoto()" class="btn btn-secondary btn-lg">
-          🔄 Retake Photo
-        </button>
+        <button type="button" (click)="retakePhoto()" class="btn btn-secondary btn-lg" [disabled]="isPreparingDownload">↺ Edit my photo</button>
       </div>
 
-      <!-- Trust Info -->
-      <div class="trust-info">
-        <p>✈️ Your photo meets 100% international government standards</p>
-        <p>🔒 Your payment is secure and encrypted</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payment Form -->
-  <div *ngIf="paymentStep === 'payment'" class="checkout-container payment-container">
-    <div class="checkout-section payment-form-section">
-      <div class="payment-form">
-        <!-- Order Summary -->
-        <div class="order-summary-mini">
-          <h4>Order Summary</h4>
-          <div class="summary-item">
-            <span>Passport Photo (Digital)</span>
-            <span>${{ getSubtotal().toFixed(2) }}</span>
-          </div>
-          <div class="summary-item total-mini">
-            <span>Total</span>
-            <span>${{ getTotal().toFixed(2) }}</span>
-          </div>
-        </div>
-
-        <hr class="divider" />
-
-        <!-- Payment Fields -->
-        <div class="form-group">
-          <label>Full Name *</label>
-          <input type="text" [(ngModel)]="cardholderName" placeholder="John Doe" class="form-input" [disabled]="isProcessing" />
-        </div>
-
-        <div class="form-group">
-          <label>Email Address *</label>
-          <input type="email" [(ngModel)]="email" placeholder="john@example.com" class="form-input" [disabled]="isProcessing" />
-          <p class="form-hint">Your confirmation email will be sent here</p>
-        </div>
-
-        <div class="form-group">
-          <label>Card Number</label>
-          <input type="text" [(ngModel)]="cardNumber" class="form-input" [disabled]="isProcessing" />
-          <p class="form-hint">Test card: 4242 4242 4242 4242</p>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Expiry Date</label>
-            <input type="text" [(ngModel)]="expiryDate" class="form-input" [disabled]="isProcessing" />
-          </div>
-          <div class="form-group">
-            <label>CVV</label>
-            <input type="text" [(ngModel)]="cvv" class="form-input" [disabled]="isProcessing" />
-          </div>
-        </div>
-
-        <div class="form-group checkbox">
-          <label>
-            <input type="checkbox" [(ngModel)]="agreeToTerms" [disabled]="isProcessing" />
-            I agree to the terms and conditions
-          </label>
-        </div>
-
-        <div class="payment-security">
-          <p>🔒 Your payment information is encrypted and secure</p>
-          <p>✓ Simulated payment (demo mode)</p>
-        </div>
-
-        <!-- Payment Buttons -->
+      <div *ngIf="downloadComplete" class="free-success" role="status">
+        <h2>✓ Your free download is ready</h2>
+        <p>Your photo has been downloaded to your device.</p>
         <div class="action-buttons">
-          <button
-            type="button"
-            (click)="proceedToPayment()"
-            class="btn btn-primary btn-lg"
-            [disabled]="isProcessing"
-          >
-            {{ isProcessing ? '⏳ Processing...' : '✓ Complete Payment' }}
-          </button>
-          <button type="button" (click)="backToReview()" class="btn btn-secondary btn-lg" [disabled]="isProcessing">
-            ← Back to Review
-          </button>
+          <button type="button" (click)="downloadPhoto()" class="btn btn-primary btn-lg">Download again</button>
+          <button type="button" (click)="retakePhoto()" class="btn btn-secondary btn-lg">Create another photo</button>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Success Page -->
-  <div *ngIf="paymentStep === 'success'" class="checkout-container success-container">
-    <div class="checkout-section success-section">
-      <div class="success-content">
-        <div class="success-icon">✅</div>
-        <h2>Payment Successful!</h2>
-        <p class="success-message">Thank you for your purchase. Your order has been confirmed.</p>
-
-        <div *ngIf="emailSent" class="email-sent-banner">
-          <p>📧 Your passport photo has been sent to <strong>{{ email }}</strong></p>
-          <p style="font-size: 12px; color: #666; margin-top: 4px;">Check your inbox and spam folder</p>
-        </div>
-
-        <div class="auto-download-banner">
-          <p>📥 Your photo has been downloaded automatically to your device</p>
-          <p style="font-size: 12px; color: #666; margin-top: 4px;">Check your Downloads folder</p>
-        </div>
-
-        <div class="success-details">
-          <div class="detail-item">
-            <span class="detail-label">Order ID:</span>
-            <span class="detail-value">{{ getOrderId() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Amount Paid:</span>
-            <span class="detail-value">${{ getTotal().toFixed(2) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Email:</span>
-            <span class="detail-value">{{ email }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Card:</span>
-            <span class="detail-value">•••• •••• •••• 4242</span>
-          </div>
-        </div>
-
-        <div class="success-steps">
-          <h4>What Just Happened?</h4>
-          <ol>
-            <li>✅ Payment completed successfully</li>
-            <li *ngIf="emailSent">✅ Passport photo emailed to {{ email }}</li>
-            <li>✅ Photo downloaded to your device automatically</li>
-            <li>📋 Our expert will verify compliance within 24 hours</li>
-            <li>✓ Use your verified photo for your ID application</li>
-          </ol>
-        </div>
-
-        <div class="action-buttons">
-          <button type="button" (click)="downloadPhoto()" class="btn btn-primary btn-lg">
-            ⬇ Download Photo Again
-          </button>
-          <button type="button" (click)="retakePhoto()" class="btn btn-secondary btn-lg">
-            📸 Create Another Photo
-          </button>
-        </div>
-
-        <div class="confirmation-email">
-          <p>📧 Confirmation email sent to {{ email }} • 📥 Photo downloaded automatically</p>
-        </div>
-      </div>
-    </div>
+    </section>
   </div>
 </div>

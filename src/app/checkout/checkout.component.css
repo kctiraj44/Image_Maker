@@ -5,6 +5,17 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* USA visual system */
+.checkout-wrapper { position: relative; background: linear-gradient(135deg, #f8fbff, #e3edf9); }
+.checkout-wrapper::before { content: "★  ✦  ★  ✦  ★  ✦  ★"; display: block; margin-bottom: 12px; color: #c9354f; font-size: 12px; letter-spacing: 8px; text-align: center; }
+.checkout-header h1 { color: #173b6d; }.checkout-subtitle { color: #586d88; }
+.checkout-section { border-top: 4px solid #c9354f; box-shadow: 0 14px 34px rgba(20,54,99,.12); }
+.validation-box { border-color: #26966d; background: #f0f8f4; }.price-summary, .order-summary-mini { border-color: #d8e3f0 !important; background: #f7faff !important; }
+.btn-primary { background: linear-gradient(135deg, #173b6d, #0d2c59) !important; border-bottom: 3px solid #c9354f; }.btn-secondary { color: #173b6d !important; border-color: #b9cbe1 !important; background: #fff !important; }
+.promo-box, .payment-security, .trust-info { border-left-color: #c9354f !important; }
+.form-input:focus { border-color: #173b6d !important; box-shadow: 0 0 0 3px rgba(23,59,109,.12) !important; }
+.checkout-kicker { margin: 0 0 .45rem; color: #c9354f; font-size: .76rem; font-weight: 800; letter-spacing: .12em; }.free-summary .total span:last-child { color: #178a5a; }.free-success { padding: 1.35rem; border: 1px solid #9bcdb7; border-radius: 10px; background: #f1fbf5; }.free-success h2 { margin: 0; color: #173b6d; font-size: 1.15rem; }.free-success p { margin: 0 0 .5rem; color: #50627d; line-height: 1.45; font-size: .9rem; }
+
 .checkout-header {
   text-align: center;
   margin-bottom: 40px;

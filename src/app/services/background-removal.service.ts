@@ -3,6 +3,7 @@ import { removeBackground } from '@imgly/background-removal';
 
 @Injectable({ providedIn: 'root' })
 export class BackgroundRemovalService {
+  private readonly maxDigitalFileSizeBytes = 240 * 1024;
   async replaceBackgroundWithWhite(source: HTMLCanvasElement): Promise<string> {
     const image = await this.toJpegBlob(source);
     const foreground = await removeBackground(image, {
@@ -12,6 +13,10 @@ export class BackgroundRemovalService {
     });
 
     return this.compositeOnWhite(foreground, source.width, source.height);
+  }
+
+  async createPassportJpeg(source: HTMLCanvasElement): Promise<string> {
+    return this.createSubmissionJpeg(source);
   }
 
   private toJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -44,10 +49,42 @@ export class BackgroundRemovalService {
       context.fillStyle = '#ffffff';
       context.fillRect(0, 0, width, height);
       context.drawImage(foreground, 0, 0, width, height);
-      return canvas.toDataURL('image/jpeg', 0.95);
+      return this.createSubmissionJpeg(canvas);
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
+  }
+
+  private async createSubmissionJpeg(canvas: HTMLCanvasElement): Promise<string> {
+    for (let quality = 0.92; quality >= 0.5; quality -= 0.06) {
+      const blob = await this.canvasToJpegBlob(canvas, quality);
+      if (blob.size <= this.maxDigitalFileSizeBytes) {
+        return this.blobToDataUrl(blob);
+      }
+    }
+
+    throw new Error('The final JPEG is larger than the 240 KB digital-image limit. Please use a simpler, well-lit photo and try again.');
+  }
+
+  private canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+        reject(new Error('The final JPEG could not be created.'));
+      }, 'image/jpeg', quality);
+    });
+  }
+
+  private blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('The final JPEG could not be read.'));
+      reader.readAsDataURL(blob);
+    });
   }
 
 }

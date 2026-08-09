@@ -1,7 +1,21 @@
 <div class="cropper-wrapper">
+  <div *ngIf="isProcessingPreview" class="processing-overlay" role="status" aria-live="assertive" aria-label="Creating cropped passport photo preview">
+    <div class="processing-modal">
+      <div class="processing-orbit" aria-hidden="true"><span>✦</span></div>
+      <p class="processing-label">PREPARING YOUR PHOTO</p>
+      <h2>Creating your preview</h2>
+      <p>We are preparing your final 1200 × 1200 JPEG. Please keep this page open.</p>
+      <div class="processing-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
+  </div>
+
   <div class="cropper-header">
+    <p class="cropper-eyebrow">STEP 2 OF 3 · AUTOMATIC PASSPORT COMPOSITION</p>
     <h1>Crop Your Passport Photo</h1>
-    <p class="cropper-subtitle">Position your face and adjust the crop area to match the blue guides</p>
+    <p class="cropper-subtitle">We automatically position a detected face and prepare your preview. You can refine it only if needed.</p>
+    <div class="output-specs" aria-label="Final photo settings">
+      <span>□ Square 1200 × 1200 px</span><span>◉ Head target: 60% height</span><span>◉ Eye line: 59% from bottom</span><span>✓ JPEG format</span><span>◒ 240 KB maximum</span><span>◉ Color / sRGB</span>
+    </div>
   </div>
 
   <div class="cropper-main-content" [class.single-column]="!croppedImage">
@@ -24,14 +38,21 @@
 
       <!-- Control Panel -->
       <div class="control-panel">
+        <div class="control-intro">
+          <strong *ngIf="autoCropStatus === 'detecting'">Automatically framing your photo…</strong>
+          <strong *ngIf="autoCropStatus === 'applied'">✓ Automatic face framing applied</strong>
+          <strong *ngIf="autoCropStatus === 'unavailable'">Manual framing is ready</strong>
+          <span *ngIf="autoCropStatus === 'applied'">Head height targets 60% of the image and the eye line targets 59% from the bottom. Both targets are inside the published ranges.</span>
+          <span *ngIf="autoCropStatus !== 'applied'">A closer fallback frame was applied. Keep the top of the hair on the yellow line, chin on the red line, and eyes on the blue line.</span>
+        </div>
         <div class="control-group">
           <label class="control-label">Zoom</label>
           <div class="button-group">
             <button type="button" class="control-btn control-btn-secondary" (click)="zoomOut()" title="Zoom out">
-              <span class="btn-icon">−</span>
+              <span class="btn-icon">−</span> Zoom out
             </button>
             <button type="button" class="control-btn control-btn-secondary" (click)="zoomIn()" title="Zoom in">
-              <span class="btn-icon">+</span>
+              <span class="btn-icon">+</span> Zoom in
             </button>
           </div>
         </div>
@@ -40,63 +61,89 @@
           <label class="control-label">Rotate</label>
           <div class="button-group">
             <button type="button" class="control-btn control-btn-secondary" (click)="rotateLeft()" title="Rotate left">
-              ↺
+              ↺ Turn left
             </button>
             <button type="button" class="control-btn control-btn-secondary" (click)="rotateRight()" title="Rotate right">
-              ↻
+              ↻ Turn right
             </button>
           </div>
         </div>
 
         <button type="button" class="control-btn control-btn-reset" (click)="resetView()" title="Reset all changes">
-          Reset
+          Reset adjustments
         </button>
 
         <button type="button" class="control-btn control-btn-primary" (click)="cropImage()" [disabled]="isProcessingPreview">
-          {{ isProcessingPreview ? 'Preparing Preview…' : 'Preview with White Background' }}
+          <ng-container *ngIf="isProcessingPreview; else previewButton">
+            <span class="button-spinner" aria-hidden="true"></span>
+            Processing your photo…
+          </ng-container>
+          <ng-template #previewButton>Continue to preview <span aria-hidden="true">→</span></ng-template>
         </button>
       </div>
 
       <p *ngIf="previewError" class="preview-error" role="alert">{{ previewError }}</p>
 
       <div class="instructions">
-        <p><strong>💡 Positioning Tips:</strong></p>
+        <p><strong>Quick positioning guide</strong></p>
         <ul>
-          <li>Use arrow keys for fine positioning</li>
-          <li>Zoom until your face fills the oval</li>
-          <li>Keep your face centred on the vertical line</li>
+          <li>Place the top of the hair at the yellow line and the bottom of the chin at the red line.</li>
+          <li>Align your eyes close to the blue dashed line (59% up from the bottom).</li>
+          <li>Keep your face centred; shoulders should stay within the lower guide.</li>
         </ul>
-      </div>
-
-      <div class="face-checklist">
-        <h4>� How to Align Your Photo</h4>
-        <div class="checklist-item"><span class="dot yellow"></span><strong>Top of Head</strong> — touch the yellow line at top</div>
-        <div class="checklist-item"><span class="dot blue"></span><strong>Eyes</strong> — align with the two blue eye shapes</div>
-        <div class="checklist-item"><span class="dot green"></span><strong>Nose</strong> — tip should be on the green dot</div>
-        <div class="checklist-item"><span class="dot orange"></span><strong>Mouth</strong> — align closed mouth to the orange line</div>
-        <div class="checklist-item"><span class="dot red"></span><strong>Chin</strong> — bottom of chin on the red line</div>
-        <div class="checklist-item"><span class="dot white"></span><strong>Face oval</strong> — your head should fill the dashed oval</div>
       </div>
     </div>
 
     <!-- Right: Preview -->
     <div class="cropper-section preview-section" *ngIf="croppedImage">
       <div class="preview-container">
-        <h2 class="preview-title">Preview</h2>
+        <p class="preview-eyebrow">YOUR PASSPORT PHOTO</p>
+        <h2 class="preview-title">{{ backgroundChoice === 'remove' ? 'White-background preview' : 'Cropped photo preview' }}</h2>
+        <p class="preview-subtitle">Review your result before continuing to free download.</p>
+        <p *ngIf="autoCropStatus === 'applied'" class="auto-preview-note">✓ Automatically framed around the detected face. Please review before downloading.</p>
         <div class="preview-image-wrapper">
-          <img
-            [src]="croppedImage"
-            alt="Cropped Preview"
-            class="preview-image"
-          />
+          <div class="passport-template-preview">
+            <img
+              [src]="croppedImage"
+              alt="Cropped Preview"
+              class="preview-image"
+            />
+            <div class="template-line template-top" aria-hidden="true"><span>TOP OF HEAD</span></div>
+            <div class="template-line template-chin" aria-hidden="true"><span>BOTTOM OF CHIN</span></div>
+          </div>
         </div>
         <div class="preview-info">
-          <p class="preview-size">600 × 600 pixels</p>
-          <p class="preview-format">JPEG Format</p>
-          <p class="preview-background">White background applied</p>
+          <p class="preview-size">✓ 1200 × 1200 pixels · JPEG · {{ getFinalImageSizeText() }}</p>
+          <p class="preview-format">Color image · sRGB output · maximum file size: 240 KB</p>
+          <p class="preview-background">{{ backgroundChoice === 'remove' ? 'White background applied' : 'Your selected background was retained' }}</p>
         </div>
+        <section class="readiness-panel" aria-label="Photo readiness checks">
+          <div class="readiness-heading">
+            <p>PHOTO READINESS</p>
+            <h3>Technical checks</h3>
+          </div>
+          <div class="readiness-item">
+            <span>Square 1200 × 1200 pixels</span><strong class="check-pass">✓ Ready</strong>
+          </div>
+          <div class="readiness-item">
+            <span>JPEG color output</span><strong class="check-pass">✓ Ready</strong>
+          </div>
+          <div class="readiness-item">
+            <span>File size ≤ 240 KB</span><strong [class.check-pass]="isWithinPassportFileSizeLimit()" [class.check-review]="!isWithinPassportFileSizeLimit()">{{ isWithinPassportFileSizeLimit() ? '✓ Ready' : 'Review' }}</strong>
+          </div>
+          <div class="readiness-item">
+            <span>Head and eye positioning</span><strong class="check-review">Review guide</strong>
+          </div>
+          <p class="readiness-note">The template shows the 60% head-height target and 59% eye line. This is a guide—not official approval.</p>
+        </section>
+        <div class="human-requirements">
+          <strong>Review before using your photo</strong>
+          <span>Recent photo · plain white/off-white background · full face facing camera · neutral expression · eyes open · no eyeglasses or prohibited headwear</span>
+          <small>These human requirements cannot be guaranteed automatically. Final acceptance is decided by the U.S. embassy or consulate.</small>
+        </div>
+        <button type="button" class="edit-preview-button" (click)="returnToEditing()">← Back to editing</button>
         <button type="button" class="control-btn control-btn-download" (click)="downloadImage()">
-          💳 Continue to Checkout
+          Continue to free download →
         </button>
       </div>
     </div>

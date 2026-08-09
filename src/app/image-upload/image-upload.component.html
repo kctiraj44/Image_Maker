@@ -1,7 +1,16 @@
 <div class="upload-page">
+  <div *ngIf="isPreparingImage" class="upload-processing-overlay" role="status" aria-live="assertive">
+    <div class="upload-processing-modal">
+      <span class="upload-spinner" aria-hidden="true"></span>
+      <p class="processing-kicker">PREPARING YOUR PHOTO</p>
+      <h2>Removing the background</h2>
+      <p>We are creating a clean white-background version before opening the crop editor.</p>
+    </div>
+  </div>
+
   <h2>Create Your Passport Photo</h2>
   <p class="info-box">
-    <strong>Ready to get started?</strong> Upload a JPEG or PNG photo (max 10MB) and we'll help you crop it to perfect passport size. Your photo stays private and is never stored.
+    <strong>Choose the path that fits your photo.</strong> Already have a plain white or off-white background? Start editing immediately. Otherwise, we can remove the background first, then open the final 2 × 2 crop editor.
   </p>
   
   <div class="photo-examples-row">
@@ -18,12 +27,34 @@
     </div>
   </div>
 
-  <p class="subheading">Upload your photo:</p>
+  <section class="background-choice" aria-labelledby="background-choice-title">
+    <p class="choice-eyebrow">STEP 1 OF 3</p>
+    <h3 id="background-choice-title">How would you like to start?</h3>
+    <p class="choice-intro">You can choose based on the background in the photo you are uploading.</p>
 
-  <label class="upload-label">
-    <button type="button" (click)="fileInput.click()">📷 Choose Photo</button>
+    <div class="choice-grid">
+      <article class="choice-card">
+        <span class="choice-icon">✓</span>
+        <h4>Start editing</h4>
+        <p>My photo already has a plain white or off-white background. Keep it and go straight to the crop editor.</p>
+        <button type="button" class="choice-button choice-button-outline" (click)="choosePhoto('keep', fileInput)">
+          Upload with my background
+        </button>
+      </article>
+
+      <article class="choice-card choice-card-featured">
+        <span class="choice-badge">MOST POPULAR</span>
+        <span class="choice-icon">✦</span>
+        <h4>Remove background first</h4>
+        <p>My photo has another background. We will create a white-background version, then open the crop editor.</p>
+        <button type="button" class="choice-button choice-button-primary" (click)="choosePhoto('remove', fileInput)">
+          Remove background &amp; edit
+        </button>
+      </article>
+    </div>
     <input #fileInput type="file" accept="image/jpeg,image/png" hidden (change)="navigateToCropPage($event)" />
-  </label>
+    <p class="choice-note">JPEG or PNG · Maximum 10 MB · You will review the final result before checkout.</p>
+  </section>
 
   <p *ngIf="validationMessage" class="info-box" style="margin-top: 16px; color: #b71c1c; background: #ffebee; border-left-color: #b71c1c;">
     {{ validationMessage }}
@@ -46,8 +77,8 @@
       </div>
       <div class="spec-divider"></div>
       <div class="spec-item">
-        <span class="spec-label">🖼️ Digital (DV)</span>
-        <span class="spec-val">JPEG · 600×600 px · Max 240 KB</span>
+        <span class="spec-label">🖼️ Digital image</span>
+        <span class="spec-val">Square · 600–1200 px · JPEG</span>
       </div>
       <div class="spec-divider"></div>
       <div class="spec-item">
@@ -106,7 +137,7 @@
         <h4>Photo Quality</h4>
         <ul>
           <li>✅ Color photo, sharp and in-focus</li>
-          <li>✅ JPEG · 600×600 px · max 240 KB (DV)</li>
+          <li>✅ Square JPEG · 600–1200 px · no larger than 240 KB</li>
           <li>✅ Taken within the last 6 months</li>
           <li>❌ No blurry, grainy, or pixelated images</li>
           <li>❌ No photos copied from ID documents</li>
@@ -141,7 +172,7 @@
 
     <div class="req-notice">
       <span>🇺🇸</span>
-      <p>Requirements based on <strong>official U.S. State Department guidelines</strong> for 2×2 inch passport and visa photos. The final acceptance of your photo is at the discretion of the U.S. embassy or consulate where you apply.</p>
+      <p>Digital-image guidance: square image, <strong>600–1200 pixels</strong>, color/sRGB, JPEG format, maximum <strong>240 KB</strong>. For a scanned physical photo: 2 × 2 inches (51 × 51 mm) at 300 ppi. Final acceptance is decided by the U.S. Department of State or the relevant U.S. embassy/consulate.</p>
     </div>
   </div>
 

@@ -26,7 +26,7 @@ export class SuccessComponent implements OnInit {
     const orderDetails = this.getOrderDetails();
     this.email = orderDetails.email || '';
     this.orderId = 'ORD-' + Date.now();
-    this.total = orderDetails.total || 9.95;
+    this.total = orderDetails.total || 1.99;
 
     // Auto-download photo
     this.downloadPhoto();
@@ -50,7 +50,7 @@ export class SuccessComponent implements OnInit {
       const raw = sessionStorage.getItem('checkoutDetails');
       return raw ? JSON.parse(raw) : {};
     } catch {
-      return { email: '', cardholderName: '', total: 9.95 };
+      return { email: '', cardholderName: '', total: 1.99 };
     }
   }
 

@@ -20,6 +20,7 @@
     "@angular/router": "^19.0.0",
     "@emailjs/browser": "^4.4.1",
     "@imgly/background-removal": "^1.7.0",
+    "@mediapipe/tasks-vision": "^1.0.1",
     "cropperjs": "^1.6.2",
     "konva": "^9.3.20",
     "onnxruntime-web": "^1.21.0",

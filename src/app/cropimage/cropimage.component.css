@@ -70,6 +70,10 @@
 }
 
 .crop-container {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow: hidden;
   background: #f8f9fa;
   border-radius: 8px;
   padding: 16px;
@@ -94,6 +98,9 @@
 }
 
 .control-panel {
+  position: relative;
+  z-index: 2;
+  touch-action: manipulation;
   background: #f8f9fa;
   border-radius: 8px;
   padding: 20px;
@@ -201,6 +208,9 @@
 }
 
 .instructions {
+  position: relative;
+  z-index: 2;
+  touch-action: manipulation;
   background: #e3f2fd;
   border-left: 4px solid #0d47a1;
   padding: 16px;
@@ -224,6 +234,40 @@
 .instructions li {
   margin-bottom: 4px;
   color: #333;
+}
+
+/* CropperJS uses an absolute touch layer. Keep it inside the photo surface so
+   mobile taps on the controls or instructions can never drag the image. */
+.crop-container .cropper-container {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .cropper-wrapper {
+    padding: 12px;
+  }
+
+  .crop-editor-section,
+  .preview-section {
+    padding: 14px;
+  }
+
+  .crop-container {
+    padding: 8px;
+    margin-bottom: 16px;
+  }
+
+  .crop-container .cropper-container,
+  .crop-container .cropper-canvas {
+    touch-action: none;
+  }
+
+  .control-panel,
+  .instructions {
+    position: relative;
+    z-index: 3;
+  }
 }
 
 .preview-section {

@@ -12,6 +12,28 @@
   <p class="info-box">
     <strong>Choose the path that fits your photo.</strong> Already have a plain white or off-white background? Start editing immediately. Otherwise, we can remove the background first, then open the final 2 × 2 crop editor.
   </p>
+
+  <section class="application-choice" aria-labelledby="application-choice-title">
+    <p class="choice-eyebrow">BEFORE YOU UPLOAD</p>
+    <h3 id="application-choice-title">What are you preparing your photo for?</h3>
+    <p>Choose an option to see the usual format you will need at the end.</p>
+    <div class="application-grid">
+      <button
+        *ngFor="let option of applicationOptions"
+        type="button"
+        class="application-card"
+        [class.application-card-selected]="option.id === selectedApplication"
+        (click)="selectApplication(option.id)">
+        {{ option.title }}
+      </button>
+    </div>
+    <div class="application-guidance" aria-live="polite">
+      <strong>{{ selectedApplicationOption.shortLabel }}:</strong>
+      <span>{{ selectedApplicationOption.requirements }}</span>
+      <p><b>Recommended at download:</b> {{ selectedApplicationOption.downloadAdvice }}</p>
+      <a [href]="selectedApplicationOption.sourceUrl" target="_blank" rel="noopener noreferrer">Read official requirements ↗</a>
+    </div>
+  </section>
   
   <div class="photo-examples-row">
     <div class="photo-example1">
@@ -53,7 +75,7 @@
       </article>
     </div>
     <input #fileInput type="file" accept="image/jpeg,image/png" hidden (change)="navigateToCropPage($event)" />
-    <p class="choice-note">JPEG or PNG · Maximum 10 MB · You will review the final result before checkout.</p>
+    <p class="choice-note">JPEG or PNG · Maximum 10 MB · You will review the final result and choose digital or print format before download.</p>
   </section>
 
   <p *ngIf="validationMessage" class="info-box" style="margin-top: 16px; color: #b71c1c; background: #ffebee; border-left-color: #b71c1c;">
@@ -175,6 +197,8 @@
       <p>Digital-image guidance: square image, <strong>600–1200 pixels</strong>, color/sRGB, JPEG format, maximum <strong>240 KB</strong>. For a scanned physical photo: 2 × 2 inches (51 × 51 mm) at 300 ppi. Final acceptance is decided by the U.S. Department of State or the relevant U.S. embassy/consulate.</p>
     </div>
   </div>
+
+  <app-ad-slot placement="upload-guidance"></app-ad-slot>
 
   <!-- Video Tips Section -->
   <div class="video-section">

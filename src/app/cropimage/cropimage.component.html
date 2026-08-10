@@ -4,7 +4,7 @@
       <div class="processing-orbit" aria-hidden="true"><span>✦</span></div>
       <p class="processing-label">PREPARING YOUR PHOTO</p>
       <h2>Creating your preview</h2>
-      <p>We are preparing your final 1200 × 1200 JPEG. Please keep this page open.</p>
+      <p>We are preparing your final JPEG. Please keep this page open.</p>
       <div class="processing-dots" aria-hidden="true"><i></i><i></i><i></i></div>
     </div>
   </div>
@@ -14,7 +14,7 @@
     <h1>Crop Your Passport Photo</h1>
     <p class="cropper-subtitle">We automatically position a detected face and prepare your preview. You can refine it only if needed.</p>
     <div class="output-specs" aria-label="Final photo settings">
-      <span>□ Square 1200 × 1200 px</span><span>◉ Head target: 60% height</span><span>◉ Eye line: 59% from bottom</span><span>✓ JPEG format</span><span>◒ 240 KB maximum</span><span>◉ Color / sRGB</span>
+      <span>□ Square 600–1200 px</span><span>◉ Head target: 52% height</span><span>◉ Eye line: 59% from bottom</span><span>✓ JPEG format</span><span>◒ 240 KB maximum</span><span>◉ Color / sRGB</span>
     </div>
   </div>
 
@@ -42,7 +42,7 @@
           <strong *ngIf="autoCropStatus === 'detecting'">Automatically framing your photo…</strong>
           <strong *ngIf="autoCropStatus === 'applied'">✓ Automatic face framing applied</strong>
           <strong *ngIf="autoCropStatus === 'unavailable'">Manual framing is ready</strong>
-          <span *ngIf="autoCropStatus === 'applied'">Head height targets 60% of the image and the eye line targets 59% from the bottom. Both targets are inside the published ranges.</span>
+          <span *ngIf="autoCropStatus === 'applied'">Head height targets 52% of the image and the eye line targets 59% from the bottom. Both targets are inside the published ranges.</span>
           <span *ngIf="autoCropStatus !== 'applied'">A closer fallback frame was applied. Keep the top of the hair on the yellow line, chin on the red line, and eyes on the blue line.</span>
         </div>
         <div class="control-group">
@@ -108,12 +108,10 @@
               alt="Cropped Preview"
               class="preview-image"
             />
-            <div class="template-line template-top" aria-hidden="true"><span>TOP OF HEAD</span></div>
-            <div class="template-line template-chin" aria-hidden="true"><span>BOTTOM OF CHIN</span></div>
           </div>
         </div>
         <div class="preview-info">
-          <p class="preview-size">✓ 1200 × 1200 pixels · JPEG · {{ getFinalImageSizeText() }}</p>
+          <p class="preview-size">✓ {{ finalOutputSize }} × {{ finalOutputSize }} pixels · JPEG · {{ getFinalImageSizeText() }}</p>
           <p class="preview-format">Color image · sRGB output · maximum file size: 240 KB</p>
           <p class="preview-background">{{ backgroundChoice === 'remove' ? 'White background applied' : 'Your selected background was retained' }}</p>
         </div>
@@ -123,7 +121,7 @@
             <h3>Technical checks</h3>
           </div>
           <div class="readiness-item">
-            <span>Square 1200 × 1200 pixels</span><strong class="check-pass">✓ Ready</strong>
+            <span>Square {{ finalOutputSize }} × {{ finalOutputSize }} pixels</span><strong class="check-pass">✓ Ready</strong>
           </div>
           <div class="readiness-item">
             <span>JPEG color output</span><strong class="check-pass">✓ Ready</strong>
@@ -132,9 +130,23 @@
             <span>File size ≤ 240 KB</span><strong [class.check-pass]="isWithinPassportFileSizeLimit()" [class.check-review]="!isWithinPassportFileSizeLimit()">{{ isWithinPassportFileSizeLimit() ? '✓ Ready' : 'Review' }}</strong>
           </div>
           <div class="readiness-item">
-            <span>Head and eye positioning</span><strong class="check-review">Review guide</strong>
+            <span>Estimated JPEG compression ratio ≤ 20:1</span><strong class="check-pass">{{ getCompressionRatioText() }}</strong>
           </div>
-          <p class="readiness-note">The template shows the 60% head-height target and 59% eye line. This is a guide—not official approval.</p>
+          <div class="readiness-item">
+            <span *ngIf="compositionCheck">Head height: {{ compositionCheck.headHeightPercent | number:'1.0-0' }}% <small>(required 50–69%; target 52%)</small></span>
+            <span *ngIf="!compositionCheck">Head height: unable to measure</span>
+            <strong *ngIf="compositionCheck" [class.check-pass]="compositionCheck.headHeightWithinRange" [class.check-review]="!compositionCheck.headHeightWithinRange">{{ compositionCheck.headHeightWithinRange ? '✓ Within range' : 'Adjust crop' }}</strong>
+            <strong *ngIf="!compositionCheck" class="check-review">Review</strong>
+          </div>
+          <div class="readiness-item">
+            <span *ngIf="compositionCheck">Eye height: {{ compositionCheck.eyeHeightPercent | number:'1.0-0' }}% from bottom <small>(required 56–69%; target 59%)</small></span>
+            <span *ngIf="!compositionCheck">Eye height: unable to measure</span>
+            <strong *ngIf="compositionCheck" [class.check-pass]="compositionCheck.eyeHeightWithinRange" [class.check-review]="!compositionCheck.eyeHeightWithinRange">{{ compositionCheck.eyeHeightWithinRange ? '✓ Within range' : 'Adjust crop' }}</strong>
+            <strong *ngIf="!compositionCheck" class="check-review">Review</strong>
+          </div>
+          <p *ngIf="compositionCheck" class="readiness-note">Head height is measured from estimated hair top to chin. Eye height is measured upward from the bottom of the cropped image. This is guidance—not official approval.</p>
+          <p *ngIf="!compositionCheck" class="readiness-note">We could not reliably measure one face. Use the crop guide and review the result before downloading.</p>
+          <p class="readiness-note">The app selects the largest valid square output that also meets this browser estimate. This remains guidance—not official approval.</p>
         </section>
         <div class="human-requirements">
           <strong>Review before using your photo</strong>

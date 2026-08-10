@@ -63,6 +63,35 @@
   gap: 24px;
 }
 
+.download-options {
+  display: grid;
+  gap: 14px;
+}
+
+.download-option {
+  border: 1px solid #d8e3f0;
+  border-radius: 12px;
+  padding: 20px;
+  background: #f8fbff;
+}
+
+.download-option h2 {
+  margin: 0 0 7px;
+  color: #173b6d;
+  font-size: 1.1rem;
+}
+
+.download-option p {
+  margin: 0 0 15px;
+  color: #586d88;
+  line-height: 1.45;
+  font-size: .92rem;
+}
+
+.print-option { background: #fffdf8; border-color: #ead9aa; }
+.download-option-icon { color: #c9354f; font-size: 1.35rem; display: inline-block; margin-bottom: 9px; }
+.btn-link { border: 0; background: transparent; color: #173b6d; font-weight: 700; cursor: pointer; padding: 8px; }
+
 /* Validation Box */
 .validation-box {
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);

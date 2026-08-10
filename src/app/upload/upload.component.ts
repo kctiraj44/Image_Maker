@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms'; // ✅ Add this
 import { RouterModule } from '@angular/router';
+import { AdSlotComponent } from '../shared/ad-slot/ad-slot.component';
 
 
 @Component({
   selector: 'app-upload',
-  imports: [CommonModule,FormsModule,RouterModule],
+  imports: [CommonModule,FormsModule,RouterModule,AdSlotComponent],
   standalone: true,
   templateUrl: './upload.component.html',
   styleUrl: './upload.component.css'

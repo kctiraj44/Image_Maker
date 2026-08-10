@@ -2,39 +2,56 @@
   <div class="checkout-header">
     <p class="checkout-kicker">YOUR PHOTO IS READY</p>
     <h1>Download your passport photo for free</h1>
-    <p class="checkout-subtitle">There is no payment required. Review your photo, then download the final 600 × 600 JPEG.</p>
+    <p class="checkout-subtitle">There is no payment required. Choose a digital JPEG or a print-ready 4 × 6 layout.</p>
   </div>
 
   <div class="checkout-container">
     <section class="checkout-section photo-section">
       <div class="validation-box">
         <h2 class="validation-title">✓ Ready for your review</h2>
-        <p class="validation-desc">This tool created a 600 × 600 JPEG. Please review the current official requirements before submitting an application; the reviewing authority makes the final decision.</p>
+        <p class="validation-desc">This tool created a 1200 × 1200 JPEG. Please review the current official requirements before submitting an application; the reviewing authority makes the final decision.</p>
       </div>
       <div class="photo-preview">
         <img *ngIf="photoUrl" [src]="photoUrl" alt="Your generated passport photo" class="preview-img" />
-        <div class="photo-dimensions">600 × 600 pixels · JPEG · Free download</div>
+        <div class="photo-dimensions">1200 × 1200 pixels · JPEG · Free download</div>
       </div>
     </section>
 
     <section class="checkout-section checkout-section-right">
       <div class="price-summary free-summary">
-        <div class="summary-row"><span>Digital passport photo</span><span>$0.00</span></div>
+        <div class="summary-row"><span>Digital photo or print layout</span><span>$0.00</span></div>
         <div class="summary-row total"><span>Total today</span><span>Free</span></div>
       </div>
 
-      <div class="action-buttons" *ngIf="!downloadComplete">
-        <button type="button" (click)="downloadForFree()" class="btn btn-primary btn-lg" [disabled]="isPreparingDownload">
-          {{ isPreparingDownload ? 'Preparing your download…' : '⬇ Download photo for free' }}
-        </button>
-        <button type="button" (click)="retakePhoto()" class="btn btn-secondary btn-lg" [disabled]="isPreparingDownload">↺ Edit my photo</button>
+      <div class="download-options" *ngIf="!downloadComplete">
+        <article class="download-option">
+          <span class="download-option-icon">▣</span>
+          <h2>Digital photo</h2>
+          <p>Download one 1200 × 1200 JPEG for online visa or passport applications.</p>
+          <button type="button" (click)="downloadForFree()" class="btn btn-primary btn-lg" [disabled]="isPreparingDownload">
+            {{ isPreparingDownload ? 'Preparing your download…' : 'Download digital JPEG' }}
+          </button>
+        </article>
+
+        <article class="download-option print-option">
+          <span class="download-option-icon">▤</span>
+          <h2>Print at a photo store</h2>
+          <p>Download a 4 × 6 inch, 300 PPI layout with two 2 × 2 inch photos.</p>
+          <button type="button" (click)="downloadPrintLayout()" class="btn btn-secondary btn-lg" [disabled]="isPreparingDownload">
+            {{ isPreparingDownload ? 'Preparing your print sheet…' : 'Download 4 × 6 print layout' }}
+          </button>
+        </article>
+
+        <button type="button" (click)="retakePhoto()" class="btn btn-link" [disabled]="isPreparingDownload">↺ Edit my photo</button>
       </div>
 
       <div *ngIf="downloadComplete" class="free-success" role="status">
         <h2>✓ Your free download is ready</h2>
-        <p>Your photo has been downloaded to your device.</p>
+        <p *ngIf="lastDownloadType === 'digital'">Your digital JPEG has been downloaded to your device.</p>
+        <p *ngIf="lastDownloadType === 'print'">Your 4 × 6 print layout, with two 2 × 2 photos, has been downloaded.</p>
         <div class="action-buttons">
-          <button type="button" (click)="downloadPhoto()" class="btn btn-primary btn-lg">Download again</button>
+          <button type="button" (click)="downloadPhoto()" class="btn btn-primary btn-lg">Download digital JPEG</button>
+          <button type="button" (click)="downloadPrintLayout()" class="btn btn-secondary btn-lg">Download print layout</button>
           <button type="button" (click)="retakePhoto()" class="btn btn-secondary btn-lg">Create another photo</button>
         </div>
       </div>

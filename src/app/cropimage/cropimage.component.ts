@@ -32,18 +32,67 @@ export interface FaceBounds {
   height: number;
 }
 
+export interface PassportCompositionCheck {
+  headHeightPercent: number;
+  eyeHeightPercent: number;
+  headHeightWithinRange: boolean;
+  eyeHeightWithinRange: boolean;
+  isWithinGuidance: boolean;
+}
+
+const MIN_HEAD_HEIGHT_PERCENT = 50;
+const MAX_HEAD_HEIGHT_PERCENT = 69;
+const MIN_EYE_HEIGHT_PERCENT = 56;
+const MAX_EYE_HEIGHT_PERCENT = 69;
+const AUTOMATIC_CROP_VERTICAL_OFFSET_RATIO = 0.02;
+const TARGET_HEAD_HEIGHT_RATIO = 0.52;
+
+export function calculatePassportCompositionCheck(
+  analysis: FaceLandmarkAnalysis,
+  crop: Cropper.SetDataOptions,
+  imageWidth: number,
+  imageHeight: number
+): PassportCompositionCheck | null {
+  if (!analysis.forehead || !analysis.chin || !analysis.eyeCenter
+    || crop.y === undefined || crop.height === undefined || crop.height <= 0) {
+    return null;
+  }
+
+  const cropBottom = crop.y + crop.height;
+  const foreheadY = analysis.forehead.y * imageHeight;
+  const chinY = analysis.chin.y * imageHeight;
+  const eyeY = analysis.eyeCenter.y * imageHeight;
+  const estimatedHairTopY = foreheadY - ((chinY - foreheadY) * 0.12);
+  const headHeightPercent = ((chinY - estimatedHairTopY) / crop.height) * 100;
+  const eyeHeightPercent = ((cropBottom - eyeY) / crop.height) * 100;
+  const headHeightWithinRange = headHeightPercent >= MIN_HEAD_HEIGHT_PERCENT
+    && headHeightPercent <= MAX_HEAD_HEIGHT_PERCENT;
+  const eyeHeightWithinRange = eyeHeightPercent >= MIN_EYE_HEIGHT_PERCENT
+    && eyeHeightPercent <= MAX_EYE_HEIGHT_PERCENT;
+
+  return {
+    headHeightPercent,
+    eyeHeightPercent,
+    headHeightWithinRange,
+    eyeHeightWithinRange,
+    isWithinGuidance: headHeightWithinRange && eyeHeightWithinRange
+  };
+}
+
 export function calculateAutomaticCrop(face: FaceBounds, imageWidth: number, imageHeight: number): Cropper.SetDataOptions {
-  const targetHeadHeightRatio = 0.60;
-  // The guide uses a 60% head height with the eyes 62% up from the bottom.
+  // The guide uses a 52% head height with the eyes 59% up from the bottom.
   // This keeps both measurements inside the Department of State ranges.
   const targetTopHeadSpaceRatio = 0.14;
   const cropSize = Math.min(
-    Math.max(face.height / targetHeadHeightRatio, face.width * 1.55),
+    Math.max(face.height / TARGET_HEAD_HEIGHT_RATIO, face.width * 1.55),
     imageWidth,
     imageHeight
   );
   const x = Math.min(Math.max(face.x + (face.width / 2) - (cropSize / 2), 0), imageWidth - cropSize);
-  const y = Math.min(Math.max(face.y - (cropSize * targetTopHeadSpaceRatio), 0), imageHeight - cropSize);
+  const y = Math.min(
+    Math.max(face.y - (cropSize * targetTopHeadSpaceRatio) + (cropSize * AUTOMATIC_CROP_VERTICAL_OFFSET_RATIO), 0),
+    imageHeight - cropSize
+  );
   return { x, y, width: cropSize, height: cropSize };
 }
 
@@ -61,7 +110,9 @@ export function calculateLandmarkCrop(
   const eyeY = analysis.eyeCenter.y * imageHeight;
   const estimatedHairTopY = foreheadY - ((chinY - foreheadY) * 0.12);
   const cropSize = Math.min(
-    Math.max((chinY - estimatedHairTopY) / 0.60, imageWidth * 0.45),
+    // Keep a little horizontal breathing room, but do not let the fallback
+    // width make the detected head smaller than the selected 52% target.
+    Math.max((chinY - estimatedHairTopY) / TARGET_HEAD_HEIGHT_RATIO, imageWidth * 0.42),
     imageWidth,
     imageHeight
   );
@@ -70,7 +121,10 @@ export function calculateLandmarkCrop(
     imageWidth - cropSize
   );
   // The eye line is positioned 59% up from the bottom, as shown by the template.
-  const y = Math.min(Math.max(eyeY - (cropSize * 0.41), 0), imageHeight - cropSize);
+  const y = Math.min(
+    Math.max(eyeY - (cropSize * 0.41) + (cropSize * AUTOMATIC_CROP_VERTICAL_OFFSET_RATIO), 0),
+    imageHeight - cropSize
+  );
   return { x, y, width: cropSize, height: cropSize };
 }
 
@@ -96,8 +150,10 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
   imageUrl: string | null = null;
   croppedImage: string | null = null;
   finalImageSizeBytes: number | null = null;
+  finalOutputSize = this.outputSize;
   backgroundChoice: 'keep' | 'remove' = 'remove';
   autoCropStatus: 'detecting' | 'applied' | 'unavailable' = 'detecting';
+  compositionCheck: PassportCompositionCheck | null = null;
   isProcessingPreview = false;
   previewError: string | null = null;
 
@@ -120,6 +176,7 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
 
   moldStatus: 'idle' | 'good' | 'bad' = 'idle';
   private validationThrottle: ReturnType<typeof setTimeout> | null = null;
+  private landmarkAnalysis: FaceLandmarkAnalysis | null = null;
 
   ngAfterViewInit(): void {
     if (!this.imageElement?.nativeElement) {
@@ -171,8 +228,10 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     this.previewError = null;
 
     try {
-      this.croppedImage = await this.backgroundRemovalService.createPassportJpeg(canvas);
-      this.finalImageSizeBytes = this.getDataUrlSize(this.croppedImage);
+      const submission = await this.backgroundRemovalService.createPassportJpeg(canvas, true);
+      this.croppedImage = submission.dataUrl;
+      this.finalImageSizeBytes = submission.sizeBytes;
+      this.finalOutputSize = submission.width;
     } catch (error) {
       this.previewError = error instanceof Error
         ? error.message
@@ -196,15 +255,20 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
         this.imageElement.nativeElement.naturalHeight
       );
       if (analysis.faceCount !== 1 || !crop) {
+        this.landmarkAnalysis = null;
+        this.compositionCheck = null;
         this.autoCropStatus = 'unavailable';
         this.applyFallbackFraming();
         return;
       }
 
+      this.landmarkAnalysis = analysis;
       this.cropper.setData(crop);
       this.autoCropStatus = 'applied';
       await this.cropImage();
     } catch {
+      this.landmarkAnalysis = null;
+      this.compositionCheck = null;
       this.autoCropStatus = 'unavailable';
       this.applyFallbackFraming();
     }
@@ -229,42 +293,20 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
   }
 
   validateFacePosition(): void {
-    if (!this.cropper) return;
-    try {
-      // Sample at 80x80 for speed
-      const canvas = this.cropper.getCroppedCanvas({ width: 80, height: 80 });
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const { data } = ctx.getImageData(0, 0, 80, 80);
-
-      // Check each facial zone has sufficient content (non-uniform pixels)
-      const headOk  = this.zoneHasContent(data, 80, 8, 16);
-      const eyesOk  = this.zoneHasContent(data, 80, 28, 42);
-      const noseOk  = this.zoneHasContent(data, 80, 44, 56);
-      const chinOk  = this.zoneHasContent(data, 80, 66, 76);
-      // Ensure face is not cut off at top (head must be visible)
-      const topFilled = this.zoneHasContent(data, 80, 2, 8);
-
-      const isAligned = headOk && eyesOk && noseOk && chinOk && topFilled;
-      this.moldStatus = isAligned ? 'good' : 'bad';
-      this.updateMoldColor(isAligned);
-    } catch {
-      // Ignore canvas errors (tainted canvas, etc.)
+    if (!this.cropper || !this.landmarkAnalysis) {
+      this.compositionCheck = null;
+      this.moldStatus = 'idle';
+      return;
     }
-  }
 
-  private zoneHasContent(data: Uint8ClampedArray, w: number, yPct: number, yEndPct: number): boolean {
-    const y0 = Math.floor(yPct * w / 100);
-    const y1 = Math.floor(yEndPct * w / 100);
-    let filled = 0;
-    for (let y = y0; y < y1; y++) {
-      for (let x = 20; x < 60; x++) {
-        const i = (y * w + x) * 4;
-        // Count pixels that are not pure black/transparent (actual photo content)
-        if (data[i] + data[i+1] + data[i+2] > 60 && data[i+3] > 30) filled++;
-      }
-    }
-    return filled / ((y1 - y0) * 40) > 0.4;
+    this.compositionCheck = calculatePassportCompositionCheck(
+      this.landmarkAnalysis,
+      this.cropper.getData(true),
+      this.imageElement?.nativeElement.naturalWidth ?? 0,
+      this.imageElement?.nativeElement.naturalHeight ?? 0
+    );
+    this.moldStatus = this.compositionCheck?.isWithinGuidance ? 'good' : 'bad';
+    this.updateMoldColor(this.moldStatus === 'good');
   }
 
   private updateMoldColor(valid: boolean): void {
@@ -311,6 +353,7 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
   returnToEditing(): void {
     this.croppedImage = null;
     this.finalImageSizeBytes = null;
+    this.finalOutputSize = this.outputSize;
   }
 
   getFinalImageSizeText(): string {
@@ -321,7 +364,30 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
   }
 
   isWithinPassportFileSizeLimit(): boolean {
-    return this.finalImageSizeBytes !== null && this.finalImageSizeBytes <= 240 * 1024;
+    return this.finalImageSizeBytes !== null && this.finalImageSizeBytes <= 240_000;
+  }
+
+  getEstimatedCompressionRatio(): number {
+    if (this.finalImageSizeBytes === null || this.finalImageSizeBytes <= 0) {
+      return 0;
+    }
+
+    // A 24-bit RGB image has three bytes per pixel before JPEG
+    // encoding. This is an estimate for display only, not a download blocker.
+    return (this.finalOutputSize * this.finalOutputSize * 3) / this.finalImageSizeBytes;
+  }
+
+  getCompressionRatioText(): string {
+    return this.finalImageSizeBytes === null
+      ? 'Preparing…'
+      : `${this.getEstimatedCompressionRatio().toFixed(1)}:1`;
+  }
+
+  getCompositionCheckLabel(): string {
+    if (!this.compositionCheck) {
+      return 'Manual review needed';
+    }
+    return this.compositionCheck.isWithinGuidance ? '✓ Within guide' : 'Adjust crop';
   }
 
   downloadImage() {
@@ -384,10 +450,10 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     overlay.innerHTML = `
       <svg class="face-mold-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <!-- The only composition markers: top of head and bottom of chin. -->
-        <line x1="8" y1="14" x2="92" y2="14" stroke="rgba(63,194,140,0.82)" stroke-width="0.8" stroke-dasharray="2.3,1.8"/>
-        <text x="50" y="11" text-anchor="middle" fill="rgba(25,137,91,0.98)" font-size="3.1" font-weight="700">TOP OF HEAD</text>
-        <line x1="8" y1="74" x2="92" y2="74" stroke="rgba(63,194,140,0.82)" stroke-width="0.8" stroke-dasharray="2.3,1.8"/>
-        <text x="50" y="79" text-anchor="middle" fill="rgba(25,137,91,0.98)" font-size="3.1" font-weight="700">BOTTOM OF CHIN</text>
+        <line x1="8" y1="16" x2="92" y2="16" stroke="rgba(63,194,140,0.82)" stroke-width="0.8" stroke-dasharray="2.3,1.8"/>
+        <text x="50" y="13" text-anchor="middle" fill="rgba(25,137,91,0.98)" font-size="3.1" font-weight="700">TOP OF HEAD</text>
+        <line x1="8" y1="72" x2="92" y2="72" stroke="rgba(63,194,140,0.82)" stroke-width="0.8" stroke-dasharray="2.3,1.8"/>
+        <text x="50" y="77" text-anchor="middle" fill="rgba(25,137,91,0.98)" font-size="3.1" font-weight="700">BOTTOM OF CHIN</text>
       </svg>
     `;
 

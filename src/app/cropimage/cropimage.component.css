@@ -102,6 +102,9 @@
 }
 
 .control-intro { display: grid; gap: 3px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #d8e3f0; color: #61748e; font-size: 12px; line-height: 1.45; }.control-intro strong { color: #173b6d; font-size: 14px; }
+.hair-space-warning { margin: 0 0 14px; padding: 11px 12px; border: 1px solid #ef9a9a; border-left: 4px solid #c62828; border-radius: 7px; background: #ffebee; color: #8b1e1e; font-size: 12px; line-height: 1.45; }
+.hair-space-warning strong { display: block; margin-bottom: 2px; color: #b71c1c; }
+.preview-warning { text-align: left; }
 
 .control-group {
   margin-bottom: 16px;

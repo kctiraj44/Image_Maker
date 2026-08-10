@@ -154,6 +154,7 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
   backgroundChoice: 'keep' | 'remove' = 'remove';
   autoCropStatus: 'detecting' | 'applied' | 'unavailable' = 'detecting';
   compositionCheck: PassportCompositionCheck | null = null;
+  topHairMayBeClipped = false;
   isProcessingPreview = false;
   previewError: string | null = null;
 
@@ -257,6 +258,7 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
       if (analysis.faceCount !== 1 || !crop) {
         this.landmarkAnalysis = null;
         this.compositionCheck = null;
+        this.topHairMayBeClipped = false;
         this.autoCropStatus = 'unavailable';
         this.applyFallbackFraming();
         return;
@@ -269,6 +271,7 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     } catch {
       this.landmarkAnalysis = null;
       this.compositionCheck = null;
+      this.topHairMayBeClipped = false;
       this.autoCropStatus = 'unavailable';
       this.applyFallbackFraming();
     }
@@ -305,6 +308,12 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
       this.imageElement?.nativeElement.naturalWidth ?? 0,
       this.imageElement?.nativeElement.naturalHeight ?? 0
     );
+    const crop = this.cropper.getData(true);
+    const imageHeight = this.imageElement?.nativeElement.naturalHeight ?? 0;
+    // Face landmarks do not reliably include tall hairstyles. If the square
+    // frame touches the source image's upper boundary, warn rather than imply
+    // that the entire hairline is safely included.
+    this.topHairMayBeClipped = (crop.y ?? 0) <= Math.max(2, imageHeight * 0.005);
     this.moldStatus = this.compositionCheck?.isWithinGuidance ? 'good' : 'bad';
     this.updateMoldColor(this.moldStatus === 'good');
   }

@@ -38,6 +38,10 @@
 
       <!-- Control Panel -->
       <div class="control-panel">
+        <div *ngIf="topHairMayBeClipped" class="hair-space-warning" role="alert">
+          <strong>Top of hair may be clipped.</strong>
+          This photo reaches the top edge of the original image, so the full hairstyle may not be available. Upload a photo with more space above the head for the safest result.
+        </div>
         <div class="control-intro">
           <strong *ngIf="autoCropStatus === 'detecting'">Automatically framing your photo…</strong>
           <strong *ngIf="autoCropStatus === 'applied'">✓ Automatic face framing applied</strong>
@@ -101,6 +105,9 @@
         <h2 class="preview-title">{{ backgroundChoice === 'remove' ? 'White-background preview' : 'Cropped photo preview' }}</h2>
         <p class="preview-subtitle">Review your result before continuing to free download.</p>
         <p *ngIf="autoCropStatus === 'applied'" class="auto-preview-note">✓ Automatically framed around the detected face. Please review before downloading.</p>
+        <p *ngIf="topHairMayBeClipped" class="hair-space-warning preview-warning" role="alert">
+          <strong>Review required:</strong> the source image reaches the top edge, so the hairstyle may be clipped.
+        </p>
         <div class="preview-image-wrapper">
           <div class="passport-template-preview">
             <img

@@ -20,7 +20,13 @@
 
   <div class="cropper-main-content" [class.single-column]="!croppedImage">
     <!-- Left: Crop Editor -->
-    <div class="cropper-section crop-editor-section">
+    <div
+      class="cropper-section crop-editor-section"
+      (touchstart)="protectPageInteraction($event)"
+      (touchmove)="protectPageInteraction($event)"
+      (pointerdown)="protectPageInteraction($event)"
+      (pointermove)="protectPageInteraction($event)"
+    >
       <div class="crop-container">
         <img
           #imageElement

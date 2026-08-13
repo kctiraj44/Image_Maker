@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /image-upload
+Disallow: /crop
+Disallow: /checkout
+Disallow: /success
+Disallow: /cancel
+
+Sitemap: https://photo2x2.com/sitemap.xml

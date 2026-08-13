@@ -359,6 +359,18 @@ export class CropimageComponent implements AfterViewInit, OnDestroy {
     this.cropper?.reset();
   }
 
+  /**
+   * CropperJS listens for touch gestures globally. On mobile, do not let a
+   * gesture that started on a button, message, or the page below the canvas
+   * reach it. Gestures directly on the photo remain available for positioning.
+   */
+  protectPageInteraction(event: Event): void {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target?.closest('.crop-container')) {
+      event.stopPropagation();
+    }
+  }
+
   returnToEditing(): void {
     this.croppedImage = null;
     this.finalImageSizeBytes = null;
